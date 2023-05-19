@@ -31,6 +31,7 @@ async function run() {
 
     app.post("/all-toys", async (req, res) => {
       const toy = req.body;
+      toy.createdAt = new Date();
       const result = await toyCollection.insertOne(toy);
       res.send(result);
     });
