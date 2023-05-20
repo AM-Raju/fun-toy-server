@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion } = require("mongodb");
-require("dotenv").config();
 const app = express();
+require("dotenv").config();
 const port = process.env.PORT || 5000;
 
 //middleware
@@ -25,24 +25,42 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const toyCollection = client.db("toyDB").collection("robotToys");
 
+    // Indexing to do search on all jobs pages.
+    const indexKeys = { title: 1 };
+    const indexOptions = { name: "title" };
+
+    const result = await toyCollection.createIndex(indexKeys, indexOptions);
+    //End of indexing block
+
+    app.get("/all-toys/:text", async (req, res) => {
+      const searchText = req.params.text;
+      const result = await toyCollection
+        .find({
+          $or: [{ title: { $regex: searchText, $options: "i" } }],
+        })
+        .toArray();
+      res.json(result);
+    });
+
     app.get("/all-toys", async (req, res) => {
-      const result = await toyCollection.find().toArray();
-      res.send(result);
+      const limit = 20;
+      const result = await toyCollection.find().limit(limit).toArray();
+      res.json(result);
     });
 
     app.post("/all-toys", async (req, res) => {
       const toy = req.body;
       toy.createdAt = new Date();
       const result = await toyCollection.insertOne(toy);
-      res.send(result);
+      res.json(result);
     });
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    /*     await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!"); */
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
