@@ -30,11 +30,25 @@ async function run() {
     const toyCollection = client.db("toyDB").collection("robotToys");
 
     // Indexing to do search on all jobs pages.
-    const indexKeys = { title: 1 };
+    /*   const indexKeys = { title: 1 };
     const indexOptions = { name: "title" };
 
-    const result = await toyCollection.createIndex(indexKeys, indexOptions);
+    const result = await toyCollection.createIndex(indexKeys, indexOptions); */
     //End of indexing block
+
+    app.get("/all-toys", async (req, res) => {
+      const limit = 20;
+      const result = await toyCollection.find().limit(limit).toArray();
+      res.send(result);
+    });
+
+    app.get("/toys/:text", async (req, res) => {
+      const text = req.params.text;
+      if (text == "dogRobot" || text == "transformersRobot" || text == "babysRobot") {
+        const result = await toyCollection.find({ category: text }).toArray();
+        return res.json(result);
+      }
+    });
 
     app.get("/all-toys/:text", async (req, res) => {
       const searchText = req.params.text;
@@ -43,12 +57,6 @@ async function run() {
           $or: [{ title: { $regex: searchText, $options: "i" } }],
         })
         .toArray();
-      res.json(result);
-    });
-
-    app.get("/all-toys", async (req, res) => {
-      const limit = 20;
-      const result = await toyCollection.find().limit(limit).toArray();
       res.json(result);
     });
 
