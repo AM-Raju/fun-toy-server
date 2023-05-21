@@ -36,20 +36,27 @@ async function run() {
     const result = await toyCollection.createIndex(indexKeys, indexOptions); */
     //End of indexing block
 
+    // Getting all toy data from server
     app.get("/all-toys", async (req, res) => {
       const limit = 20;
       const result = await toyCollection.find().limit(limit).toArray();
       res.send(result);
     });
 
+    // Getting all toy data from server and filter category wise
+    // for shop by category
     app.get("/toys/:text", async (req, res) => {
       const text = req.params.text;
       if (text == "dogRobot" || text == "transformersRobot" || text == "babysRobot") {
         const result = await toyCollection.find({ category: text }).toArray();
         return res.json(result);
+      } else {
+        const result = await toyCollection.find().limit(12).toArray();
+        return res.json(result);
       }
     });
 
+    // For search function fo all toy pages.
     app.get("/all-toys/:text", async (req, res) => {
       const searchText = req.params.text;
       const result = await toyCollection
@@ -57,6 +64,12 @@ async function run() {
           $or: [{ title: { $regex: searchText, $options: "i" } }],
         })
         .toArray();
+      res.json(result);
+    });
+
+    app.get("/my-toys/:email", async (req, res) => {
+      const emailId = req.params.email;
+      const result = await toyCollection.find({ email: emailId }).sort({ price: -1 }).toArray();
       res.json(result);
     });
 
